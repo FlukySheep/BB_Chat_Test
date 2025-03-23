@@ -8,7 +8,8 @@ services:
     plan: free
 
   - name: chat-client
-    type: static
+    type: web
+    env: static
     rootDir: my-chat-app
     buildCommand: "npm install && npm run build"
     staticPublishPath: build
