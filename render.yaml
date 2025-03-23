@@ -10,6 +10,6 @@ services:
   - name: chat-client
     type: web
     env: static
-    rootDir: my-chat-app
+    rootDir: .
     buildCommand: "npm install && npm run build"
     staticPublishPath: build
