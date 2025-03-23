@@ -9,7 +9,7 @@ services:
     plan: free
 
   - name: chat-client
-    type: static
+    type: static_site
     env: static
     region: oregon
     rootDir: my-chat-app
