@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import { ChatFeed, Message as ChatMessage } from 'react-chat-ui';
 import './Chat.css';
 
-// Remove react-chat-elements usage and show a basic UI for debugging
+// We are using the server on Render
 const socket = io('https://chat-server-xatf.onrender.com');
 
 const Chat = () => {
@@ -10,6 +11,7 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
+  // Log messages for debugging
   useEffect(() => {
     console.log('Debug: messages updated', JSON.stringify(messages, null, 2));
   }, [messages]);
@@ -33,9 +35,10 @@ const Chat = () => {
     socket.emit('chat message', payload);
 
     const outgoingMsg = {
-      position: 'right',
-      text: input,
-      date: getDateString(),
+      id: 0, // Represent the current user
+      message: input,
+      senderName: nickname,
+      dateString: getDateString(),
     };
     console.log('Debug: Adding outgoing message =>', JSON.stringify(outgoingMsg));
 
@@ -47,15 +50,17 @@ const Chat = () => {
     (data) => {
       console.log('Debug: Incoming data =>', JSON.stringify(data));
 
+      // If it's from ourselves, skip
       if (data.nickname === nickname) {
         console.log('Debug: Skipping own message...');
         return;
       }
 
       const incomingMsg = {
-        position: 'left',
-        text: data.message,
-        date: getDateString(),
+        id: 1, // Represent other user
+        message: data.message,
+        senderName: data.nickname,
+        dateString: getDateString(),
       };
       console.log('Debug: Adding incoming message =>', JSON.stringify(incomingMsg));
 
@@ -71,10 +76,22 @@ const Chat = () => {
     };
   }, [handleIncomingMessage]);
 
+  // Convert our messages to react-chat-ui compatible
+  const chatMessages = messages.map((msg) => {
+    return new ChatMessage({
+      id: msg.id,
+      message: msg.message,
+      senderName: msg.senderName,
+      // The library doesn't handle date natively, so let's store as a custom property
+      customJson: { dateString: msg.dateString },
+    });
+  });
+
   return (
     <div className="chat-container">
-      <h2>Basic Chat (No react-chat-elements)</h2>
+      <h2>Mobile Messenger-style Chat with react-chat-ui</h2>
 
+      {/* Nickname input */}
       <div className="nickname-panel">
         <label htmlFor="nickname">Nickname:</label>
         <input
@@ -87,34 +104,24 @@ const Chat = () => {
         />
       </div>
 
-      <div className="messages-panel">
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className="message"
-            style={{
-              textAlign: msg.position === 'right' ? 'right' : 'left',
-              margin: '5px 0'
-            }}
-          >
-            <div
-              style={{
-                display: 'inline-block',
-                padding: '8px 12px',
-                borderRadius: '12px',
-                backgroundColor: msg.position === 'right' ? '#cce5ff' : '#eeeeee'
-              }}
-            >
-              <strong>{msg.position === 'right' ? nickname : 'Other'}: </strong>
-              {msg.text}
-              <div style={{ fontSize: '0.8em', color: '#666' }}>
-                {msg.date}
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Chat feed */}
+      <div className="messages-panel" style={{ height: '400px', overflowY: 'auto', border: '1px solid #ccc', margin: '10px 0' }}>
+        <ChatFeed
+          messages={chatMessages}
+          showSenderName
+          bubbleStyles={{
+            text: {
+              fontSize: 16
+            },
+            chatbubble: {
+              borderRadius: 20,
+              padding: 10
+            }
+          }}
+        />
       </div>
 
+      {/* Input panel */}
       <div className="input-panel">
         <input
           placeholder="Type a message..."
