@@ -11,6 +11,11 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
+  // Instead of storing a Date object, store a string to avoid serialization issues
+  const getDateString = () => {
+    return new Date().toISOString();
+  };
+
   // Log any data being sent to 'chat message'
   const handleSendMessage = () => {
     if (!nickname.trim() || !input.trim()) return;
@@ -20,11 +25,12 @@ const Chat = () => {
 
     socket.emit('chat message', payload);
 
+    // Store date as a string
     const outgoingMsg = {
       position: 'right',
       type: 'text',
       text: input,
-      date: new Date(),
+      date: getDateString(),
     };
     console.log('Adding outgoing message to state:', outgoingMsg);
 
@@ -44,7 +50,7 @@ const Chat = () => {
         position: 'left',
         type: 'text',
         text: data.message,
-        date: new Date(),
+        date: getDateString(),
       };
       console.log('Adding incoming message to state:', incomingMsg);
 
@@ -62,7 +68,7 @@ const Chat = () => {
 
   return (
     <div className="chat-container">
-      <h2>Debugging React Error #290</h2>
+      <h2>Debugging React Error #290 (Store Date as String)</h2>
 
       <div className="nickname-panel">
         <label htmlFor="nickname">Nickname:</label>
