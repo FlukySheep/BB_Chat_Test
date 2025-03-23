@@ -7,14 +7,20 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3001',
+    origin: [
+      'http://localhost:3001',
+      'https://chat-client-cnep.onrender.com'
+    ],
     methods: ['GET', 'POST']
   }
 });
 
-// Enable CORS
+// Enable CORS for Express
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: [
+    'http://localhost:3001',
+    'https://chat-client-cnep.onrender.com'
+  ],
   methods: ['GET','POST']
 }));
 
@@ -34,7 +40,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Change the port to 4000 to avoid conflicts
+// Use a unique port if desired, otherwise process.env.PORT
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
