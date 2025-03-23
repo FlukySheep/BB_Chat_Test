@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import 'react-chat-elements/dist/main.css';
 import { MessageList, Input } from 'react-chat-elements';
@@ -7,53 +7,62 @@ import './Chat.css';
 const socket = io('https://chat-server-xatf.onrender.com');
 
 const Chat = () => {
-  // Remove any references that could cause repeated re-rendering
   const [nickname, setNickname] = useState('');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
-  // Set up the socket listener only once
-  useEffect(() => {
-    socket.on('chat message', (data) => {
-      // For safety, remove referencing nickname in determining position
-      setMessages((prev) => [
-        ...prev,
-        {
-          position: 'left', // Simplify by always placing new incoming messages on the left
-          type: 'text',
-          text: data.message,
-          date: new Date()
-        },
-      ]);
-    });
-
-    return () => {
-      socket.off('chat message');
-    };
-  }, []);
-
+  // Log any data being sent to 'chat message'
   const handleSendMessage = () => {
     if (!nickname.trim() || !input.trim()) return;
 
-    socket.emit('chat message', { nickname, message: input });
+    const payload = { nickname, message: input };
+    console.log('Emitting chat message:', payload);
 
-    // Place your own messages on the right
-    setMessages((prev) => [
-      ...prev,
-      {
-        position: 'right', 
-        type: 'text',
-        text: input,
-        date: new Date()
-      }
-    ]);
+    socket.emit('chat message', payload);
 
+    const outgoingMsg = {
+      position: 'right',
+      type: 'text',
+      text: input,
+      date: new Date(),
+    };
+    console.log('Adding outgoing message to state:', outgoingMsg);
+
+    setMessages((prev) => [...prev, outgoingMsg]);
     setInput('');
   };
 
+  // Stable callback for incoming messages
+  const handleIncomingMessage = useCallback(
+    (data) => {
+      console.log('Incoming data from server:', data);
+
+      // If it's our own message, skip
+      if (data.nickname === nickname) return;
+
+      const incomingMsg = {
+        position: 'left',
+        type: 'text',
+        text: data.message,
+        date: new Date(),
+      };
+      console.log('Adding incoming message to state:', incomingMsg);
+
+      setMessages((prev) => [...prev, incomingMsg]);
+    },
+    [nickname]
+  );
+
+  useEffect(() => {
+    socket.on('chat message', handleIncomingMessage);
+    return () => {
+      socket.off('chat message', handleIncomingMessage);
+    };
+  }, [handleIncomingMessage]);
+
   return (
     <div className="chat-container">
-      <h2>react-chat-elements Demo</h2>
+      <h2>Debugging React Error #290</h2>
 
       <div className="nickname-panel">
         <label htmlFor="nickname">Nickname:</label>
