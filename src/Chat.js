@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import 'react-chat-elements/dist/main.css';
-import { MessageList, Input } from 'react-chat-elements';
 import './Chat.css';
 
+// Remove react-chat-elements usage and show a basic UI for debugging
 const socket = io('https://chat-server-xatf.onrender.com');
 
 const Chat = () => {
@@ -11,18 +10,15 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
-  // Additional debugging: watch the messages state changes
   useEffect(() => {
     console.log('Debug: messages updated', JSON.stringify(messages, null, 2));
   }, [messages]);
 
   useEffect(() => {
-    // Also log the React version
     console.log('React version:', React.version);
   }, []);
 
   const getDateString = () => {
-    // Another debug log showing the date is a string
     const dateStr = new Date().toISOString();
     console.log('Debug: Generating date string =>', dateStr);
     return dateStr;
@@ -38,7 +34,6 @@ const Chat = () => {
 
     const outgoingMsg = {
       position: 'right',
-      type: 'text',
       text: input,
       date: getDateString(),
     };
@@ -59,7 +54,6 @@ const Chat = () => {
 
       const incomingMsg = {
         position: 'left',
-        type: 'text',
         text: data.message,
         date: getDateString(),
       };
@@ -79,7 +73,7 @@ const Chat = () => {
 
   return (
     <div className="chat-container">
-      <h2>More Debugging for Minified React Error #290</h2>
+      <h2>Basic Chat (No react-chat-elements)</h2>
 
       <div className="nickname-panel">
         <label htmlFor="nickname">Nickname:</label>
@@ -94,28 +88,45 @@ const Chat = () => {
       </div>
 
       <div className="messages-panel">
-        <MessageList
-          className="message-list"
-          lockable
-          toBottomHeight="100%"
-          dataSource={messages}
-        />
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className="message"
+            style={{
+              textAlign: msg.position === 'right' ? 'right' : 'left',
+              margin: '5px 0'
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-block',
+                padding: '8px 12px',
+                borderRadius: '12px',
+                backgroundColor: msg.position === 'right' ? '#cce5ff' : '#eeeeee'
+              }}
+            >
+              <strong>{msg.position === 'right' ? nickname : 'Other'}: </strong>
+              {msg.text}
+              <div style={{ fontSize: '0.8em', color: '#666' }}>
+                {msg.date}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="input-panel">
-        <Input
+        <input
           placeholder="Type a message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={(e) => {
             if (e.key === 'Enter') handleSendMessage();
           }}
-          rightButtons={
-            <button onClick={handleSendMessage}>
-              Send
-            </button>
-          }
         />
+        <button onClick={handleSendMessage}>
+          Send
+        </button>
       </div>
     </div>
   );
