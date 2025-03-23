@@ -9,6 +9,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
+      'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:3003',
       'https://chat-client-cnep.onrender.com'
@@ -20,6 +21,7 @@ const io = new Server(server, {
 // Enable CORS for Express
 app.use(cors({
   origin: [
+    'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3003',
     'https://chat-client-cnep.onrender.com'

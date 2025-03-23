@@ -1,31 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { ChatFeed, Message as ChatMessage } from 'react-chat-ui';
 import './Chat.css';
 
-// We are using the server on Render
 const socket = io('https://chat-server-xatf.onrender.com');
 
-const Chat = () => {
+const StickerList = [
+  'https://cdn-icons-png.flaticon.com/512/742/742751.png',
+  'https://cdn-icons-png.flaticon.com/512/742/742753.png',
+  'https://cdn-icons-png.flaticon.com/512/742/742748.png'
+];
+
+const ChatComponent = () => {
   const [nickname, setNickname] = useState('');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [showStickers, setShowStickers] = useState(false);
 
-  // Log messages for debugging
   useEffect(() => {
     console.log('Debug: messages updated', JSON.stringify(messages, null, 2));
   }, [messages]);
 
-  useEffect(() => {
-    console.log('React version:', React.version);
-  }, []);
-
   const getDateString = () => {
-    const dateStr = new Date().toISOString();
-    console.log('Debug: Generating date string =>', dateStr);
-    return dateStr;
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Send a text message
   const handleSendMessage = () => {
     if (!nickname.trim() || !input.trim()) return;
 
@@ -35,35 +34,59 @@ const Chat = () => {
     socket.emit('chat message', payload);
 
     const outgoingMsg = {
-      id: 0, // Represent the current user
-      message: input,
-      senderName: nickname,
-      dateString: getDateString(),
+      position: 'right',
+      type: 'text',
+      text: input,
+      date: getDateString(),
+      nickname
     };
-    console.log('Debug: Adding outgoing message =>', JSON.stringify(outgoingMsg));
-
     setMessages((prev) => [...prev, outgoingMsg]);
     setInput('');
   };
 
+  // Send a sticker message
+  const handleSendSticker = (stickerUrl) => {
+    if (!nickname.trim()) return;
+
+    const payload = { nickname, message: `STICKER:${stickerUrl}` };
+    console.log('Debug: Emitting sticker =>', JSON.stringify(payload));
+
+    socket.emit('chat message', payload);
+
+    const outgoingMsg = {
+      position: 'right',
+      type: 'sticker',
+      stickerUrl,
+      date: getDateString(),
+      nickname
+    };
+    setMessages((prev) => [...prev, outgoingMsg]);
+    setShowStickers(false);
+  };
+
+  // Handle incoming messages from other users
   const handleIncomingMessage = useCallback(
     (data) => {
       console.log('Debug: Incoming data =>', JSON.stringify(data));
-
-      // If it's from ourselves, skip
       if (data.nickname === nickname) {
-        console.log('Debug: Skipping own message...');
-        return;
+        return; // skip own message
+      }
+      let messageType = 'text';
+      let stickerUrl = '';
+      // Check if it's a sticker
+      if (data.message.startsWith('STICKER:')) {
+        messageType = 'sticker';
+        stickerUrl = data.message.replace('STICKER:', '');
       }
 
       const incomingMsg = {
-        id: 1, // Represent other user
-        message: data.message,
-        senderName: data.nickname,
-        dateString: getDateString(),
+        position: 'left',
+        type: messageType,
+        text: messageType === 'text' ? data.message : '',
+        stickerUrl,
+        date: getDateString(),
+        nickname: data.nickname
       };
-      console.log('Debug: Adding incoming message =>', JSON.stringify(incomingMsg));
-
       setMessages((prev) => [...prev, incomingMsg]);
     },
     [nickname]
@@ -76,22 +99,12 @@ const Chat = () => {
     };
   }, [handleIncomingMessage]);
 
-  // Convert our messages to react-chat-ui compatible
-  const chatMessages = messages.map((msg) => {
-    return new ChatMessage({
-      id: msg.id,
-      message: msg.message,
-      senderName: msg.senderName,
-      // The library doesn't handle date natively, so let's store as a custom property
-      customJson: { dateString: msg.dateString },
-    });
-  });
+  const toggleStickers = () => {
+    setShowStickers((prev) => !prev);
+  };
 
   return (
     <div className="chat-container">
-      <h2>Mobile Messenger-style Chat with react-chat-ui</h2>
-
-      {/* Nickname input */}
       <div className="nickname-panel">
         <label htmlFor="nickname">Nickname:</label>
         <input
@@ -100,28 +113,36 @@ const Chat = () => {
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           placeholder="Choose a nickname"
-          style={{ marginLeft: '8px' }}
         />
       </div>
 
-      {/* Chat feed */}
-      <div className="messages-panel" style={{ height: '400px', overflowY: 'auto', border: '1px solid #ccc', margin: '10px 0' }}>
-        <ChatFeed
-          messages={chatMessages}
-          showSenderName
-          bubbleStyles={{
-            text: {
-              fontSize: 16
-            },
-            chatbubble: {
-              borderRadius: 20,
-              padding: 10
-            }
-          }}
-        />
+      <div className="messages-panel">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`messageRow ${msg.position}`}
+          >
+            <div
+              className={`messageBubble ${
+                msg.position === 'left' ? 'leftBubble' : 'rightBubble'
+              }`}
+            >
+              <span className="messageNickname">{msg.nickname}:</span>
+              {msg.type === 'sticker' && msg.stickerUrl ? (
+                <img
+                  src={msg.stickerUrl}
+                  alt="Sticker"
+                  style={{ maxHeight: '80px', display: 'block', marginTop: '4px' }}
+                />
+              ) : (
+                <span>{msg.text}</span>
+              )}
+              <div className="messageTime">{msg.date}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Input panel */}
       <div className="input-panel">
         <input
           placeholder="Type a message..."
@@ -131,12 +152,34 @@ const Chat = () => {
             if (e.key === 'Enter') handleSendMessage();
           }}
         />
-        <button onClick={handleSendMessage}>
-          Send
+        <button onClick={handleSendMessage}>Send</button>
+        <button onClick={toggleStickers} style={{ marginLeft: '6px' }}>
+          Stickers
         </button>
       </div>
+
+      {showStickers && (
+        <div
+          style={{
+            backgroundColor: '#eee',
+            padding: '10px',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
+        >
+          {StickerList.map((url) => (
+            <img
+              key={url}
+              src={url}
+              alt="Sticker"
+              style={{ width: '50px', height: '50px', margin: '0 5px', cursor: 'pointer' }}
+              onClick={() => handleSendSticker(url)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default Chat;
+export default ChatComponent;

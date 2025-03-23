@@ -1,58 +1,112 @@
+/* Basic styles for a mobile messenger-like chat, using system color scheme */
+
+:root {
+  color-scheme: light dark;
+}
+
+/* Remove any background or text color overrides if relying on system theme. */
+
 .chat-container {
+  position: absolute; /* Let it occupy the entire screen */
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
   display: flex;
   flex-direction: column;
-  max-width: 600px;
-  height: 80vh;
+  max-width: 480px;
   margin: 0 auto;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background-color: #f8f8f8;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-family: sans-serif;
+  height: 100vh;
 }
 
-.nickname-panel {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.nickname-panel label {
-  margin-right: 8px;
-}
-
-.chat-feed-container {
-  flex: 1;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  background-color: white;
-  border-radius: 6px;
-  padding: 8px;
-  margin-bottom: 8px;
-}
-
+.nickname-panel,
 .input-panel {
   display: flex;
   align-items: center;
+  padding: 10px;
+  background-color: var(--header-bg, #eee);
+}
+
+.nickname-panel label {
+  margin-right: 5px;
+}
+
+.messages-panel {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+/* Root bubble container */
+.messageRow {
+  margin: 8px 0;
+  display: flex;
+}
+
+.left {
+  justify-content: flex-start;
+}
+
+.right {
+  justify-content: flex-end;
+}
+
+/* The bubble container */
+.messageBubble {
+  padding: 10px 12px;
+  border-radius: 16px;
+  max-width: 70%;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/* Nickname is now displayed in the bubble */
+.messageNickname {
+  font-weight: bold;
+  margin-right: 4px; /* Add a small spacing between nickname and text */
+}
+
+/* Smaller time timestamp */
+.messageTime {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-top: 3px;
+}
+
+/* The left bubble uses a default background color */
+.leftBubble {
+  background-color: #E9EFFB;
+  color: var(--bubble-left-text, #333);
+  border-top-left-radius: 0;
+}
+
+/* The right bubble is highlighted slightly */
+.rightBubble {
+  background-color: #C7E9FF;
+  color: var(--bubble-right-text, #333);
+  border-top-right-radius: 0;
 }
 
 .input-panel input {
   flex: 1;
-  padding: 8px;
+  padding: 10px;
+  font-size: 14px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  border: 1px solid #aaa;
-  margin-right: 8px;
 }
 
 .input-panel button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  background-color: #007bff;
-  color: white;
-  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
   cursor: pointer;
-}
-
-.input-panel button:hover {
-  background-color: #0056b3;
+  border: none;
+  border-radius: 4px;
+  background-color: #2196F3;
+  color: #fff;
 }
