@@ -11,40 +11,51 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
-  // Instead of storing a Date object, store a string to avoid serialization issues
+  // Additional debugging: watch the messages state changes
+  useEffect(() => {
+    console.log('Debug: messages updated', JSON.stringify(messages, null, 2));
+  }, [messages]);
+
+  useEffect(() => {
+    // Also log the React version
+    console.log('React version:', React.version);
+  }, []);
+
   const getDateString = () => {
-    return new Date().toISOString();
+    // Another debug log showing the date is a string
+    const dateStr = new Date().toISOString();
+    console.log('Debug: Generating date string =>', dateStr);
+    return dateStr;
   };
 
-  // Log any data being sent to 'chat message'
   const handleSendMessage = () => {
     if (!nickname.trim() || !input.trim()) return;
 
     const payload = { nickname, message: input };
-    console.log('Emitting chat message:', payload);
+    console.log('Debug: Emitting chat message =>', JSON.stringify(payload));
 
     socket.emit('chat message', payload);
 
-    // Store date as a string
     const outgoingMsg = {
       position: 'right',
       type: 'text',
       text: input,
       date: getDateString(),
     };
-    console.log('Adding outgoing message to state:', outgoingMsg);
+    console.log('Debug: Adding outgoing message =>', JSON.stringify(outgoingMsg));
 
     setMessages((prev) => [...prev, outgoingMsg]);
     setInput('');
   };
 
-  // Stable callback for incoming messages
   const handleIncomingMessage = useCallback(
     (data) => {
-      console.log('Incoming data from server:', data);
+      console.log('Debug: Incoming data =>', JSON.stringify(data));
 
-      // If it's our own message, skip
-      if (data.nickname === nickname) return;
+      if (data.nickname === nickname) {
+        console.log('Debug: Skipping own message...');
+        return;
+      }
 
       const incomingMsg = {
         position: 'left',
@@ -52,7 +63,7 @@ const Chat = () => {
         text: data.message,
         date: getDateString(),
       };
-      console.log('Adding incoming message to state:', incomingMsg);
+      console.log('Debug: Adding incoming message =>', JSON.stringify(incomingMsg));
 
       setMessages((prev) => [...prev, incomingMsg]);
     },
@@ -68,7 +79,7 @@ const Chat = () => {
 
   return (
     <div className="chat-container">
-      <h2>Debugging React Error #290 (Store Date as String)</h2>
+      <h2>More Debugging for Minified React Error #290</h2>
 
       <div className="nickname-panel">
         <label htmlFor="nickname">Nickname:</label>
