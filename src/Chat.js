@@ -4,50 +4,48 @@ import 'react-chat-elements/dist/main.css';
 import { MessageList, Input } from 'react-chat-elements';
 import './Chat.css';
 
-// Connect to the Render server
 const socket = io('https://chat-server-xatf.onrender.com');
 
 const Chat = () => {
+  // Remove any references that could cause repeated re-rendering
   const [nickname, setNickname] = useState('');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
-  // Only set up the socket listener once
+  // Set up the socket listener only once
   useEffect(() => {
-    socket.on('chat message', handleIncomingMessage);
+    socket.on('chat message', (data) => {
+      // For safety, remove referencing nickname in determining position
+      setMessages((prev) => [
+        ...prev,
+        {
+          position: 'left', // Simplify by always placing new incoming messages on the left
+          type: 'text',
+          text: data.message,
+          date: new Date()
+        },
+      ]);
+    });
 
     return () => {
-      socket.off('chat message', handleIncomingMessage);
+      socket.off('chat message');
     };
   }, []);
-
-  const handleIncomingMessage = (data) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        position: data.nickname === nickname ? 'right' : 'left',
-        type: 'text',
-        text: data.message,
-        date: new Date()
-      },
-    ]);
-  };
 
   const handleSendMessage = () => {
     if (!nickname.trim() || !input.trim()) return;
 
-    // Emit to server
     socket.emit('chat message', { nickname, message: input });
 
-    // Add your own message to local state
+    // Place your own messages on the right
     setMessages((prev) => [
       ...prev,
       {
-        position: 'right',
+        position: 'right', 
         type: 'text',
         text: input,
         date: new Date()
-      },
+      }
     ]);
 
     setInput('');
@@ -56,6 +54,7 @@ const Chat = () => {
   return (
     <div className="chat-container">
       <h2>react-chat-elements Demo</h2>
+
       <div className="nickname-panel">
         <label htmlFor="nickname">Nickname:</label>
         <input
