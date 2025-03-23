@@ -2,16 +2,13 @@ services:
   - name: chat-server
     type: web
     env: node
-    region: oregon
     rootDir: server
     buildCommand: "npm install"
     startCommand: "node index.js"
     plan: free
 
   - name: chat-client
-    type: static_site
-    env: static
-    region: oregon
+    type: static
     rootDir: my-chat-app
     buildCommand: "npm install && npm run build"
     staticPublishPath: build
